@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kino Buyurtma Qilish</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 420px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #e50914; /* Netflix qizil rangi */
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #bbb;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            background-color: #2a2a2a;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: #e50914;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #e50914;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #b80710;
+        }
+
+        .status-msg {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .success { color: #2ecc71; }
+        .error { color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🎬 Kino Buyurtma Qilish</h2>
+    <form id="kinoForm">
+        <div class="form-group">
+            <label for="name">Ismingiz / Telegram nikiz:</label>
+            <input type="text" id="name" placeholder="Masalan: Ali yoki @ali_user" required>
+        </div>
+
+        <div class="form-group">
+            <label for="movie">Kino (Film yoki Serial) nomi:</label>
+            <input type="text" id="movie" placeholder="Masalan: Avatart 2" required>
+        </div>
+
+        <div class="form-group">
+            <label for="quality">Sifat / Sanoq:</label>
+            <select id="quality">
+                <option value="1080p (FHD)">1080p (Yuqori sifat)</option>
+                <option value="720p (HD)">720p (O'rtacha)</option>
+                <option value="480p (SD)">480p (Tashqi xotira uchun tejamkor)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="comment">Qo'shimcha izoh (til, ilova va h.k.):</label>
+            <textarea id="comment" rows="3" placeholder="Masalan: O'zbek tilida bo'lsin"></textarea>
+        </div>
+
+        <button type="submit" id="sendBtn">Buyurtma berish 🚀</button>
+        <div id="status" class="status-msg"></div>
+    </form>
+</div>
+
+<script>
+    // ⚠️ BU YERGA O'ZINGIZNING BOT TOKEN VA CHAT ID'INGIZNI QO'YING
+    const TELEGRAM_BOT_TOKEN = '8933043292:AAHNtuK6_cWM7dlSEGiluYha3yAiQOco468';
+    const TELEGRAM_CHAT_ID = '7428700877';
+
+    document.getElementById('kinoForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const sendBtn = document.getElementById('sendBtn');
+        const status = document.getElementById('status');
+
+        // Tugmani faolsizlantirish (qayta-qayta bosmaslik uchun)
+        sendBtn.disabled = true;
+        sendBtn.innerText = "Yuborilmoqda...";
+        status.innerText = "";
+
+        // Ma'lumotlarni olish
+        const name = document.getElementById('name').value;
+        const movie = document.getElementById('movie').value;
+        const quality = document.getElementById('quality').value;
+        const comment = document.getElementById('comment').value || "Mavjud emas";
+
+        // Telegram xabari formati
+        const textMessage = `
+🎬 <b>Yangi Kino Zakaz!</b>
+
+👤 <b>Mijoz:</b> ${name}
+🍿 <b>Kino nomi:</b> ${movie}
+💿 <b>Sifati:</b> ${quality}
+💬 <b>Izoh:</b> ${comment}
+        `;
+
+        // Telegram API orqali yuborish
+        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: textMessage,
+                parse_mode: 'HTML'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                status.className = "status-msg success";
+                status.innerText = "✅ Buyurtmangiz qabul qilindi! Tez orada aloqaga chiqamiz.";
+                document.getElementById('kinoForm').reset();
+            } else {
+                throw new Error("Telegram xatoligi");
+            }
+        })
+        .catch(error => {
+            status.className = "status-msg error";
+            status.innerText = "❌ Xatolik yuz berdi. Bot Token yoki Chat ID to'g'riligini tekshiring.";
+        })
+        .finally(() => {
+            sendBtn.disabled = false;
+            sendBtn.innerText = "Buyurtma berish 🚀";
+        });
+    });
+</script>
+
+</body>
+</html>
